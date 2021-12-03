@@ -1,29 +1,49 @@
-use std::fs::File;
-use std::io::{prelude::*, BufReader};
-
-use anyhow::Result;
+use anyhow::{Result, bail};
 
 fn main() -> Result<()> {
-    println!("{}", part_1()?);
+    let input = std::fs::read_to_string("inputs/day_2")?;
+    let commands: Vec<_> = input
+        .lines()
+        .map(|line| line.split_once(' ').expect("error parsing line"))
+        .map(|(command, argument)| (command, argument.parse::<i32>().expect("error parsing argument")))
+        .collect();
+
+    println!("{}", part_1(&commands)?);
+    println!("{}", part_2(&commands)?);
+
     Ok(())
 }
 
-fn part_1() -> Result<i32> {
-    let file = File::open("inputs/day_2")?;
-    let reader = BufReader::new(file);
-
+fn part_1(commands: &[(&str, i32)]) -> Result<i32> {
     let mut depth: i32 = 0;
     let mut horizontal_position: i32 = 0;
 
-    for line in reader.lines() {
-        if let Some((command, argument)) = line?.split_once(' ') {
-            let argument: i32 = argument.parse()?;
-            match command {
-                "forward" => horizontal_position += argument,
-                "down" => depth += argument,
-                "up" => depth -= argument,
-                _ => anyhow::bail!("invalid command"),
+    for (command, argument) in commands {
+        match *command {
+            "forward" => horizontal_position += argument,
+            "down" => depth += argument,
+            "up" => depth -= argument,
+            _ => bail!("invalid command"),
+        }
+    }
+
+    Ok(depth * horizontal_position)
+}
+
+fn part_2(commands: &[(&str, i32)]) -> Result<i32> {
+    let mut depth: i32 = 0;
+    let mut horizontal_position: i32 = 0;
+    let mut aim = 0;
+
+    for (command, argument) in commands {
+        match *command {
+            "down" => aim += argument,
+            "up" => aim -= argument,
+            "forward" => {
+                horizontal_position += argument;
+                depth += aim * argument;
             }
+            _ => bail!("invalid command"),
         }
     }
 
